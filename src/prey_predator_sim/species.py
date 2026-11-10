@@ -53,10 +53,25 @@ class Creature:
 
 
 class Prey(Creature):
-    pass
+
+    def __init__(self, p_death: float, p_reproduce: float, p_hunt: float):
+        super().__init__(p_death, p_reproduce)
+        self.p_hunt = p_hunt
 
 
 class Predator(Creature):
-    pass
 
+    p_death_hungry: float = 0.9
 
+    def __init__(self, p_death: float = p_death_hungry, p_reproduce: float, hungry: bool = True):
+        super().__init__(p_death, p_reproduce)
+        self.hungry = hungry
+
+    def hunt(prey: Prey)
+        if random.random() < prey.p_hunt:
+            prey.alive = False
+            self.hungry = False
+
+    def kill():
+        if self.hungry:
+            super().kill()

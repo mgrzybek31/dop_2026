@@ -14,7 +14,7 @@ class Population:
     _instances: set[Creature]  # Tu będą dwa zbiory (Prey & Predator)
     history: list[int]  # list[HistoryElement]
 
-    def __init__(self, n: int, **kwargs):
+    def __init__(self, species, n: int, **kwargs):
 
         self._instances = set(
             [Creature(**kwargs) for _ in range(n)]
@@ -23,9 +23,17 @@ class Population:
         self.history = [self.n]
 
     def natural_selection(self):
+        newborns = set()
+        for creature in self._instances:
+            new_one = creature.reproduce()
+
 
         for creature in self._instances:
             creature.kill()
+
+        if self.__name__ == Predator:
+            #poluj
+            pass
 
         self._instances = set([creature for creature in self._instances if creature.alive])
 
