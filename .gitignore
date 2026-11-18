@@ -79,6 +79,11 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb
+!/eksperymenty.ipynb
+
+# Generated submission files
+/repozytorium.zip
+/wyniki_symulacji.pdf
 
 # IPython
 profile_default/

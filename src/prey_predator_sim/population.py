@@ -1,60 +1,114 @@
-from dataclasses import dataclass
+"""Manage a population and visualize the results of its evolution."""
+
 import matplotlib.pyplot as plt
 
 from .species import Creature, Prey, Predator
 
 
-@dataclass
-class HistoryElement:
-    prey: int
-    predators: int
-
 class Population:
+    """Store creatures and keep track of the number of survivors by species."""
 
-    _instances: dict[Prey: set, Predator: set]
-    history: dict[Prey: list, Predator: list]
-
-    def __init__(self, n_prey: int, n_predator: int, **kwargs):
-
-        self._instances = set(
-            [Creature(**kwargs) for _ in range(n)]
-        )
-
-        self.history = [self.n]
-
-    def natural_selection(self):
-
-        newborns = set()
-        for creature in self._instances:
-            new_one = creature.reproduce()
-
-
-        for creature in self._instances:
-            creature.kill()
-
-        ## iteruj po tym czego jest wiecej przy polowaniu
-        #if self.__name__ == Predator:
-            #poluj
-        #    pass
-        ## jezeli predatorow jest wiecej niz prey to iteruj po wszytskich predatorach (modulo) dopoki sa wolne prey (predator ma 1 szanse na zapolowanie w jednej selekcji naturalnje)
-        ## jezeli prey jest wiecej niz predatorow to tez iteruj po predatorach, jesli ktoremus sie nie udalo to ma druga szanse (bo wiecej prey), mozna losowac prey dla predatora,
+    def __init__(self, population_data: dict[type[Creature], int]) -> None:
         """
-        permutacja prey zeby bylo losowo (opcjonalnie)
-        for i in predator:
-            aktualizuj prey - wywalaj not alive zeby predator nie polowal na martwe
+        Create the initial population.
+
+        :param dict[type[Creature], int] population_data: initial count for each species
         """
 
-        self._instances = set([creature for creature in self._instances if creature.alive])
+        self._species: tuple[type[Creature], ...] = tuple(population_data)
+        self._ordered_instances: list[Creature] = [
+            species() for species, count in population_data.items() for _ in range(count)
+        ]
+        self._instances: set[Creature] = set(self._ordered_instances)
+        self.history: list[dict[type[Creature], int]] = [self.n]
 
-        self.history.append(self.n)
+    def count_by_species(self) -> dict[type[Creature], int]:
+        """
+        Count the living creatures of each species.
 
-    def plot_history(self):
-        plt.plot(self.history)
-        plt.xlabel("Pokolenie")
-        plt.ylabel("Liczebność populacji")
-        plt.title("Historia populacji")
-        plt.show()
+        :return: number of living creatures of each species
+        """
+
+        counts = dict.fromkeys(self._species, 0)
+        for creature in self._instances:
+            if creature.alive:
+                counts[type(creature)] += 1
+
+        return counts
 
     @property
-    def n(self):
-        return len(self._instances)
+    def n(self) -> dict[type[Creature], int]:
+        """
+        Get the current population counts.
+
+        :return: number of living creatures for each species
+        """
+
+        return self.count_by_species()
+
+    def hunting(self) -> None:
+        """Pair living predators and prey one to one and run each encounter."""
+
+        predators = [creature for creature in self._ordered_instances if isinstance(creature, Predator) and creature.alive]
+        prey = [creature for creature in self._ordered_instances if isinstance(creature, Prey) and creature.alive]
+
+        for predator, victim in zip(predators, prey):
+            predator.hunt(victim)
+
+    def natural_selection(self) -> None:
+        """
+        Apply reproduction, hunting, and death for one step.
+
+        Record survivor counts before removing dead creatures and adding newborns.
+        """
+
+        newborns = []
+        for creature in self._ordered_instances:
+            if creature.alive:
+                newborn = creature.reproduce()
+                if newborn is not None:
+                    newborns.append(newborn)
+
+        self.hunting()
+        for creature in self._ordered_instances:
+            if creature.alive:
+                creature.kill()
+
+        self._ordered_instances = [creature for creature in self._ordered_instances if creature.alive]
+        self._ordered_instances.extend(newborns)
+        self._instances = set(self._ordered_instances)
+        self.history.append(self.n)
+
+    def plot_history(self, title: str = "Historia populacji") -> None:
+        """
+        Show the recorded population counts by species and step.
+
+        :param str title: title displayed above the plot
+        """
+
+        plt.figure()
+        for species in self._species:
+            sizes = [counts[species] for counts in self.history]
+            plt.plot(sizes, label=species.__name__)
+        plt.xlabel("Krok")
+        plt.ylabel("Liczebność populacji")
+        plt.title(title)
+        plt.grid()
+        if self._species:
+            plt.legend()
+        plt.show()
+
+    def plot_histogram(self, attr: str) -> None:
+        """
+        Show the distribution of an attribute among living creatures that have it.
+
+        :param str attr: name of the numeric attribute to plot
+        """
+
+        values = [getattr(creature, attr) for creature in self._instances if creature.alive and hasattr(creature, attr)]
+        plt.figure()
+        plt.hist(values)
+        plt.xlabel(attr)
+        plt.ylabel("Liczebność")
+        plt.grid()
+        plt.show()

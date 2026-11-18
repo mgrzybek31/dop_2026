@@ -1,19 +1,19 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "dop_2026"
 version = "0.1"
-description = "Examples for the programming course"
+description = "Agent-based prey-predator simulation"
 requires-python = ">=3.11"
-dependencies = [
-    "jupyter",
-    "jupytext",
-    "numpy",
-    "pandas",
-    "matplotlib",
-]
+dependencies = ["matplotlib"]
+
+[project.optional-dependencies]
+notebook = ["ipykernel"]
+
+[project.scripts]
+symulacja = "src.prey_predator_sim.simulation:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
